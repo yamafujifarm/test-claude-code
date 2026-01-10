@@ -175,7 +175,75 @@
             color: #5c4033;
         }
 
+        /* タッチコントロール */
+        .touch-controls {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5e6d3;
+            border: 2px solid #8b4513;
+            border-radius: 8px;
+        }
+
+        .touch-controls h3 {
+            color: #5c4033;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .touch-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .touch-btn {
+            background: linear-gradient(135deg, #8b4513 0%, #5c4033 100%);
+            color: white;
+            border: 2px solid #5c4033;
+            padding: 20px 15px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-family: inherit;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .touch-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #5c4033 0%, #3d2820 100%);
+        }
+
+        .touch-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .touch-btn-left { grid-column: 1; }
+        .touch-btn-rotate { grid-column: 2; }
+        .touch-btn-right { grid-column: 3; }
+        .touch-btn-hold { grid-column: 1; }
+        .touch-btn-down { grid-column: 2; }
+        .touch-btn-drop { grid-column: 3; }
+
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .game-container {
+                padding: 15px;
+            }
+
             .game-area {
                 flex-direction: column;
                 align-items: center;
@@ -183,6 +251,40 @@
 
             h1 {
                 font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+
+            canvas {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .side-panel {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .touch-controls {
+                display: block;
+            }
+
+            .vegetables-legend {
+                font-size: 0.9em;
+            }
+
+            .vegetable-item {
+                font-size: 0.7em;
+                margin: 3px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .touch-controls {
+                display: none !important;
             }
         }
     </style>
@@ -243,6 +345,18 @@
             <div class="vegetable-item">🟥 万願寺とうがらし</div>
             <div class="vegetable-item">🟤 堀川ごぼう</div>
             <div class="vegetable-item">🟧 金時にんじん</div>
+        </div>
+
+        <div class="touch-controls" id="touchControls">
+            <h3>タッチ操作</h3>
+            <div class="touch-buttons">
+                <button class="touch-btn touch-btn-left" id="btnLeft">◀<br>左</button>
+                <button class="touch-btn touch-btn-rotate" id="btnRotate">↻<br>回転</button>
+                <button class="touch-btn touch-btn-right" id="btnRight">▶<br>右</button>
+                <button class="touch-btn touch-btn-hold" id="btnHold">📦<br>ホールド</button>
+                <button class="touch-btn touch-btn-down" id="btnDown">⬇<br>ソフト</button>
+                <button class="touch-btn touch-btn-drop" id="btnDrop">⬇⬇<br>ドロップ</button>
+            </div>
         </div>
     </div>
 
@@ -761,6 +875,152 @@
         // ボタンイベント
         document.getElementById('startButton').addEventListener('click', startGame);
         document.getElementById('restartButton').addEventListener('click', startGame);
+
+        // タッチコントロール
+        function handleTouchControl(action) {
+            if (!gameStarted || isPaused || !currentPiece) return;
+
+            switch(action) {
+                case 'left':
+                    currentPiece.move(-1, 0);
+                    break;
+                case 'right':
+                    currentPiece.move(1, 0);
+                    break;
+                case 'rotate':
+                    currentPiece.rotate();
+                    break;
+                case 'down':
+                    if (currentPiece.move(0, 1)) {
+                        score += 1;
+                        updateScore();
+                    }
+                    dropCounter = 0;
+                    break;
+                case 'drop':
+                    const dropDistance = currentPiece.getGhostY() - currentPiece.y;
+                    currentPiece.hardDrop();
+                    score += dropDistance * 2;
+                    updateScore();
+                    lockPiece();
+                    dropCounter = 0;
+                    break;
+                case 'hold':
+                    hold();
+                    break;
+            }
+
+            draw();
+        }
+
+        // タッチボタンのイベントリスナー
+        const touchButtons = [
+            { id: 'btnLeft', action: 'left' },
+            { id: 'btnRight', action: 'right' },
+            { id: 'btnRotate', action: 'rotate' },
+            { id: 'btnDown', action: 'down' },
+            { id: 'btnDrop', action: 'drop' },
+            { id: 'btnHold', action: 'hold' }
+        ];
+
+        touchButtons.forEach(({ id, action }) => {
+            const button = document.getElementById(id);
+
+            // タッチイベント
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handleTouchControl(action);
+            });
+
+            // クリックイベント（PC用フォールバック）
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleTouchControl(action);
+            });
+        });
+
+        // 連続タップ対応（ソフトドロップ用）
+        let downInterval = null;
+        document.getElementById('btnDown').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleTouchControl('down');
+
+            downInterval = setInterval(() => {
+                handleTouchControl('down');
+            }, 100);
+        });
+
+        document.getElementById('btnDown').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            if (downInterval) {
+                clearInterval(downInterval);
+                downInterval = null;
+            }
+        });
+
+        // スワイプジェスチャー
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+
+            if (!gameStarted || isPaused || !currentPiece) return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            const minSwipeDistance = 30;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // 横スワイプ
+                if (Math.abs(deltaX) > minSwipeDistance) {
+                    if (deltaX > 0) {
+                        currentPiece.move(1, 0);
+                    } else {
+                        currentPiece.move(-1, 0);
+                    }
+                    draw();
+                }
+            } else {
+                // 縦スワイプ
+                if (Math.abs(deltaY) > minSwipeDistance) {
+                    if (deltaY > 0) {
+                        // 下スワイプ = ハードドロップ
+                        const dropDistance = currentPiece.getGhostY() - currentPiece.y;
+                        currentPiece.hardDrop();
+                        score += dropDistance * 2;
+                        updateScore();
+                        lockPiece();
+                        dropCounter = 0;
+                    } else {
+                        // 上スワイプ = 回転
+                        currentPiece.rotate();
+                    }
+                    draw();
+                }
+            }
+        });
+
+        // タップで回転
+        canvas.addEventListener('click', (e) => {
+            if (!gameStarted || isPaused || !currentPiece) return;
+            currentPiece.rotate();
+            draw();
+        });
 
         // 初期描画
         createBoard();
