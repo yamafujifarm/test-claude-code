@@ -1,0 +1,30 @@
+# やまふじ農園 お米 注文予測 - アクセス制御
+
+# ディレクトリ一覧表示を禁止
+Options -Indexes
+
+# 検索エンジンクローラを拒否（補助）
+<IfModule mod_headers.c>
+    Header set X-Robots-Tag "noindex, nofollow, noarchive"
+</IfModule>
+
+# 内部ファイルへの直接アクセスを禁止
+<FilesMatch "^(config\.php|.*\.sql|.*\.md)$">
+    Require all denied
+</FilesMatch>
+
+# lib / sql ディレクトリへの直接アクセス禁止
+RedirectMatch 404 /lib/.*
+RedirectMatch 404 /sql/.*
+
+# デフォルトドキュメント
+DirectoryIndex index.php
+
+# 文字コード
+AddDefaultCharset UTF-8
+
+# PHP セッションのセキュリティ
+<IfModule mod_php.c>
+    php_value session.cookie_httponly 1
+    php_value session.use_strict_mode 1
+</IfModule>
