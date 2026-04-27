@@ -30,6 +30,7 @@ $pages = [
     'purchase_new'    => 'purchase_form.php',
     'purchase_delete' => 'purchase_delete.php',
     'export'          => 'export.php',
+    'import'          => 'import.php',
 ];
 
 $page = (string)($_GET['p'] ?? 'dashboard');

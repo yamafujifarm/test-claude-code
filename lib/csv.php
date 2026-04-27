@@ -100,3 +100,191 @@ function export_predictions_csv(PDO $pdo): void
 
     output_csv('predictions_' . date('Ymd_His') . '.csv', $header, $rows);
 }
+
+/* ==================================================================
+ * CSV インポート
+ * ================================================================== */
+
+const CATEGORY_JP_TO_KEY = [
+    '業務用' => 'business',
+    '常連'   => 'regular',
+    '自由米' => 'retail',
+];
+
+const IMPORT_HEADER = ['顧客名', 'カテゴリー', '購入日時', '数量(kg)', 'メモ'];
+
+/**
+ * アップロードされた CSV を解析してバリデート済みの行配列を返す。
+ *
+ * 戻り値:
+ *  [
+ *    'rows'   => [ ['line'=>N, 'name'=>..., 'category'=>'business'|..., 'purchased_at'=>'Y-m-d H:i:s', 'quantity_kg'=>float, 'note'=>string], ...],
+ *    'errors' => [ ['line'=>N, 'message'=>'...', 'raw'=>[...]], ...],
+ *  ]
+ */
+function parse_import_csv(string $filepath): array
+{
+    $rows   = [];
+    $errors = [];
+
+    $content = file_get_contents($filepath);
+    if ($content === false) {
+        return [
+            'rows'   => [],
+            'errors' => [['line' => 0, 'message' => 'ファイルを読み込めませんでした。', 'raw' => []]],
+        ];
+    }
+
+    // 文字コード検出して UTF-8 へ変換（Excel 由来の Shift_JIS にも対応）
+    $encoding = mb_detect_encoding($content, ['UTF-8', 'SJIS-win', 'SJIS', 'EUC-JP', 'CP932'], true);
+    if ($encoding && strtoupper($encoding) !== 'UTF-8') {
+        $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+    }
+    // BOM 除去
+    if (substr($content, 0, 3) === "\xEF\xBB\xBF") {
+        $content = substr($content, 3);
+    }
+    // 改行コード正規化
+    $content = str_replace(["\r\n", "\r"], "\n", $content);
+
+    $tmp = fopen('php://temp', 'r+');
+    fwrite($tmp, $content);
+    rewind($tmp);
+
+    $lineNo        = 0;
+    $headerSkipped = false;
+    while (($cells = fgetcsv($tmp)) !== false) {
+        $lineNo++;
+
+        // 完全に空の行はスキップ
+        $nonEmpty = array_filter($cells, fn($c) => trim((string)$c) !== '');
+        if (count($nonEmpty) === 0) {
+            continue;
+        }
+
+        // 1 行目はヘッダーとみなしてスキップ（顧客名 / カテゴリー... の判定）
+        if (!$headerSkipped) {
+            $headerSkipped = true;
+            $first = trim((string)($cells[0] ?? ''));
+            if ($first === '顧客名' || $first === 'name') {
+                continue;
+            }
+            // ヘッダーが無い CSV だった場合に備えてフォールスルー（このまま処理する）
+        }
+
+        $name       = trim((string)($cells[0] ?? ''));
+        $categoryJp = trim((string)($cells[1] ?? ''));
+        $dateStr    = trim((string)($cells[2] ?? ''));
+        $qtyStr     = trim((string)($cells[3] ?? ''));
+        $note       = trim((string)($cells[4] ?? ''));
+
+        $rowErrors = [];
+        if ($name === '') {
+            $rowErrors[] = '顧客名が空です';
+        }
+        if (!isset(CATEGORY_JP_TO_KEY[$categoryJp])) {
+            $rowErrors[] = 'カテゴリーが不正です（業務用 / 常連 / 自由米 のいずれか）: ' . $categoryJp;
+        }
+        $ts = $dateStr !== '' ? strtotime($dateStr) : false;
+        if ($ts === false) {
+            $rowErrors[] = '購入日時が不正です: ' . $dateStr;
+        }
+        if ($qtyStr === '' || !is_numeric($qtyStr) || (float)$qtyStr <= 0) {
+            $rowErrors[] = '数量(kg) が不正です: ' . $qtyStr;
+        }
+
+        if (!empty($rowErrors)) {
+            $errors[] = [
+                'line'    => $lineNo,
+                'message' => implode(' / ', $rowErrors),
+                'raw'     => $cells,
+            ];
+            continue;
+        }
+
+        $rows[] = [
+            'line'         => $lineNo,
+            'name'         => $name,
+            'category'     => CATEGORY_JP_TO_KEY[$categoryJp],
+            'category_jp'  => $categoryJp,
+            'purchased_at' => date('Y-m-d H:i:s', $ts),
+            'quantity_kg'  => (float)$qtyStr,
+            'note'         => $note,
+        ];
+    }
+    fclose($tmp);
+
+    return ['rows' => $rows, 'errors' => $errors];
+}
+
+/**
+ * 解析済みの行を DB に取り込む。
+ * 重複（同一顧客・同一購入日時・同一数量）はスキップ。
+ * 同名顧客が無ければ自動で新規作成する。
+ */
+function execute_import(PDO $pdo, array $rows): array
+{
+    $stats = [
+        'purchases_added'    => 0,
+        'customers_created'  => 0,
+        'duplicates_skipped' => 0,
+    ];
+
+    // 既存の顧客名 → ID マップ
+    $byName = [];
+    foreach ($pdo->query('SELECT id, name FROM customers') as $c) {
+        $byName[$c['name']] = (int)$c['id'];
+    }
+
+    $insertCustomer = $pdo->prepare(
+        'INSERT INTO customers (name, category) VALUES (:name, :category)'
+    );
+    $checkDupe = $pdo->prepare(
+        'SELECT COUNT(*) FROM purchases
+         WHERE customer_id = :cid AND purchased_at = :pa AND quantity_kg = :qty'
+    );
+    $insertPurchase = $pdo->prepare(
+        'INSERT INTO purchases (customer_id, purchased_at, quantity_kg, note)
+         VALUES (:cid, :pa, :qty, :note)'
+    );
+
+    $pdo->beginTransaction();
+    try {
+        foreach ($rows as $row) {
+            $cid = $byName[$row['name']] ?? null;
+            if ($cid === null) {
+                $insertCustomer->execute([
+                    ':name'     => $row['name'],
+                    ':category' => $row['category'],
+                ]);
+                $cid = (int)$pdo->lastInsertId();
+                $byName[$row['name']] = $cid;
+                $stats['customers_created']++;
+            }
+
+            $checkDupe->execute([
+                ':cid' => $cid,
+                ':pa'  => $row['purchased_at'],
+                ':qty' => $row['quantity_kg'],
+            ]);
+            if ((int)$checkDupe->fetchColumn() > 0) {
+                $stats['duplicates_skipped']++;
+                continue;
+            }
+
+            $insertPurchase->execute([
+                ':cid'  => $cid,
+                ':pa'   => $row['purchased_at'],
+                ':qty'  => $row['quantity_kg'],
+                ':note' => $row['note'] !== '' ? $row['note'] : null,
+            ]);
+            $stats['purchases_added']++;
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        throw $e;
+    }
+
+    return $stats;
+}

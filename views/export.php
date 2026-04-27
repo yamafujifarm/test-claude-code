@@ -12,14 +12,26 @@ if ($type === 'predictions') {
     return;
 }
 
-$pageTitle = 'データ書き出し';
+$pageTitle = 'データ管理';
 require __DIR__ . '/_header.php';
 ?>
 
 <section class="page-section">
-    <h2 class="section-title">データ書き出し (CSV)</h2>
-    <p class="muted">ダウンロードしたファイルは AI に分析させたり、Excel で確認したりできます。</p>
+    <h2 class="section-title">データ管理</h2>
+    <p class="muted">CSV の取り込み（既存履歴のインポート）と書き出し（バックアップ・AI 分析用）ができます。</p>
 
+    <h3 class="section-subtitle">取り込み</h3>
+    <div class="export-list">
+        <a class="export-card export-card--accent" href="<?= h(url('', ['p' => 'import'])) ?>">
+            <div class="export-card__title">CSV から購入履歴を取り込む</div>
+            <div class="export-card__desc">
+                Excel 等で管理している過去の購入履歴を取り込みます。<br>
+                顧客名・カテゴリー・購入日時・数量(kg)・メモ の 5 列。
+            </div>
+        </a>
+    </div>
+
+    <h3 class="section-subtitle">書き出し</h3>
     <div class="export-list">
         <a class="export-card" href="<?= h(url('', ['p' => 'export', 'type' => 'purchases'])) ?>">
             <div class="export-card__title">購入履歴 CSV (生データ)</div>
