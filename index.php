@@ -31,6 +31,7 @@ $pages = [
     'purchase_delete' => 'purchase_delete.php',
     'export'          => 'export.php',
     'import'          => 'import.php',
+    'history'         => 'history.php',
 ];
 
 $page = (string)($_GET['p'] ?? 'dashboard');

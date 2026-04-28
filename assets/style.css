@@ -562,6 +562,178 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     font-size: 13px;
 }
 
+/* ----- History page ----- */
+.summary-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.summary-card .unit { font-size: 14px; font-weight: 600; opacity: 0.8; margin-left: 2px; }
+
+.category-stat-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.category-stat {
+    background: var(--color-soft);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.category-stat__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.category-stat__pct {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+.category-stat__num {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-accent-dark);
+    line-height: 1.1;
+    margin: 2px 0 6px;
+}
+.category-stat__num .unit {
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.8;
+}
+.category-stat__bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.category-stat__bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.month-list { display: flex; flex-direction: column; gap: 4px; }
+.month-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 6px;
+    border-radius: 6px;
+    color: inherit;
+    text-decoration: none;
+    font-size: 13px;
+}
+.month-row:hover { background: var(--color-soft); text-decoration: none; }
+.month-row.is-current { background: #fffaef; }
+.month-row__label { font-weight: 700; color: var(--color-accent-dark); display: flex; align-items: center; gap: 4px; }
+.month-row__bar {
+    height: 6px;
+    background: rgba(0,0,0,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 40px;
+}
+.month-row__bar-fill {
+    height: 100%;
+    background: var(--color-accent);
+    border-radius: 3px;
+}
+.month-row__num {
+    font-weight: 700;
+    color: var(--color-text);
+    text-align: right;
+    min-width: 70px;
+}
+.month-row__cnt {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    min-width: 32px;
+    text-align: right;
+}
+
+.filter-form__row { margin-bottom: 8px; }
+.filter-summary {
+    background: var(--color-soft);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.filter-summary__clear {
+    font-size: 12px;
+    color: var(--color-text-muted);
+}
+
+.history-global-list { list-style: none; }
+.history-global-list__date-sep {
+    margin: 12px 0 6px;
+    padding: 4px 8px;
+    background: var(--color-soft);
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-accent-dark);
+    letter-spacing: 0.05em;
+}
+.history-global-list__date-sep:first-child { margin-top: 0; }
+.history-global-item {
+    border-bottom: 1px solid var(--color-border);
+}
+.history-global-item:last-child { border-bottom: none; }
+.history-global-item__link {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+    padding: 10px 4px;
+    color: inherit;
+    text-decoration: none;
+    align-items: center;
+}
+.history-global-item__link:hover { text-decoration: none; background: var(--color-soft); }
+.history-global-item__main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+.history-global-item__name {
+    font-weight: 700;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.history-global-item__side {
+    text-align: right;
+    white-space: nowrap;
+}
+.history-global-item__qty {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--color-accent-dark);
+}
+.history-global-item__time {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-left: 6px;
+}
+.history-global-item__note {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    padding-left: 4px;
+}
+
+/* iPhone 12 mini など狭い画面で 5 ナビ項目を収めるため微調整 */
+.app-nav__item { font-size: 11px; padding: 0 2px; }
+.app-nav__icon { font-size: 20px; }
+
 /* ----- Tablet / Desktop ----- */
 @media (min-width: 720px) {
     .app-main {
@@ -569,6 +741,10 @@ textarea.form-input { resize: vertical; min-height: 80px; }
         padding-right: 20px;
     }
     .summary-grid { grid-template-columns: repeat(4, 1fr); }
+    .summary-grid--2 { grid-template-columns: repeat(2, 1fr); }
+    .summary-grid--3 { grid-template-columns: repeat(3, 1fr); }
+    .category-stat-grid { flex-direction: row; }
+    .category-stat-grid .category-stat { flex: 1; }
     .form-actions { flex-direction: row-reverse; align-items: center; }
     .form-actions .btn-block { width: auto; flex: 1; }
 }

@@ -16,7 +16,12 @@
         <span class="app-nav__icon">+</span>
         <span class="app-nav__label">記録</span>
     </a>
-    <a class="app-nav__item <?= $current === 'export' ? 'is-active' : '' ?>"
+    <a class="app-nav__item <?= $current === 'history' ? 'is-active' : '' ?>"
+       href="<?= h(url('', ['p' => 'history'])) ?>">
+        <span class="app-nav__icon">≡</span>
+        <span class="app-nav__label">履歴</span>
+    </a>
+    <a class="app-nav__item <?= ($current === 'export' || $current === 'import') ? 'is-active' : '' ?>"
        href="<?= h(url('', ['p' => 'export'])) ?>">
         <span class="app-nav__icon">↓</span>
         <span class="app-nav__label">データ</span>
