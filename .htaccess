@@ -13,15 +13,31 @@ Options -Indexes
     Require all denied
 </FilesMatch>
 
-# lib / sql ディレクトリへの直接アクセス禁止
+# lib / sql / views ディレクトリへの直接アクセス禁止
 RedirectMatch 404 /lib/.*
 RedirectMatch 404 /sql/.*
+RedirectMatch 404 /views/.*
 
 # デフォルトドキュメント
 DirectoryIndex index.php
 
 # 文字コード
 AddDefaultCharset UTF-8
+
+# PWA 用 MIME タイプ
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType application/manifest+json .json
+    AddType text/javascript .js
+</IfModule>
+
+# Service Worker のスコープ用ヘッダ（最大スコープを許可）
+<IfModule mod_headers.c>
+    <FilesMatch "sw\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
 
 # PHP セッションのセキュリティ
 <IfModule mod_php.c>

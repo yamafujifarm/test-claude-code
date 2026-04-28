@@ -7,8 +7,20 @@
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#5c4033">
     <title><?= h($pageTitle ?? APP_NAME) ?> | <?= h(APP_NAME) ?></title>
-    <link rel="stylesheet" href="assets/style.css?v=1">
-    <link rel="apple-touch-icon" href="assets/icon.png">
+    <link rel="stylesheet" href="assets/style.css?v=2">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="米注文予測">
+    <script>
+        // Service Worker を登録（プッシュ通知の受信に必須）
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            });
+        }
+    </script>
 </head>
 <body>
 <header class="app-header">

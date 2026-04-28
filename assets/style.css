@@ -734,6 +734,67 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .app-nav__item { font-size: 11px; padding: 0 2px; }
 .app-nav__icon { font-size: 20px; }
 
+/* ----- Staff list / Push settings ----- */
+.staff-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.staff-item {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 10px;
+    align-items: center;
+}
+.staff-item__name { font-weight: 700; font-size: 16px; color: var(--color-text); }
+.staff-item__meta { font-size: 12px; color: var(--color-text-muted); grid-column: 1; }
+.staff-item__delete { grid-column: 2; grid-row: 1 / span 2; }
+
+.form-row--inline {
+    flex-direction: row;
+    gap: 8px;
+    align-items: stretch;
+}
+.form-row--inline .form-input { flex: 1; }
+.form-row--inline .btn { white-space: nowrap; }
+
+.push-status {
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--color-soft);
+    text-align: center;
+    font-weight: 700;
+    margin: 10px 0;
+}
+.push-status--enabled { background: #e6f1e6; color: var(--color-success); }
+.push-status--disabled { background: var(--color-soft); color: var(--color-text-muted); }
+.push-status--denied,
+.push-status--unsupported,
+.push-status--standalone_required {
+    background: #fbe6e6;
+    color: var(--color-error);
+}
+
+.setup-guide {
+    margin-top: 14px;
+    background: #fffaef;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.setup-guide summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--color-accent-dark);
+    font-size: 14px;
+}
+.setup-guide ol {
+    margin: 8px 0 4px 18px;
+    font-size: 13px;
+    color: var(--color-text);
+    line-height: 1.7;
+}
+
 /* ----- Tablet / Desktop ----- */
 @media (min-width: 720px) {
     .app-main {

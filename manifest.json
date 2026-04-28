@@ -1,0 +1,26 @@
+{
+    "name": "やまふじ農園 お米 注文予測",
+    "short_name": "米注文予測",
+    "description": "顧客のお米購入履歴から次回購入時期を予測する社内ツール",
+    "start_url": "./index.php?p=dashboard",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#5c4033",
+    "background_color": "#faf6ef",
+    "lang": "ja",
+    "icons": [
+        {
+            "src": "assets/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "assets/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

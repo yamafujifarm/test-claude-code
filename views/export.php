@@ -49,6 +49,23 @@ require __DIR__ . '/_header.php';
             </div>
         </a>
     </div>
+
+    <h3 class="section-subtitle">プッシュ通知</h3>
+    <div class="export-list">
+        <a class="export-card" href="<?= h(url('', ['p' => 'settings'])) ?>">
+            <div class="export-card__title">この端末の通知設定</div>
+            <div class="export-card__desc">
+                この iPhone / 端末で通知を受け取るか設定します。<br>
+                ホーム画面に追加した PWA から開いてください。
+            </div>
+        </a>
+        <a class="export-card" href="<?= h(url('', ['p' => 'staff'])) ?>">
+            <div class="export-card__title">担当者マスタ</div>
+            <div class="export-card__desc">
+                注文を記録する人を登録します（あなた・奥様 など）。
+            </div>
+        </a>
+    </div>
 </section>
 
 <?php require __DIR__ . '/_footer.php'; ?>

@@ -19,6 +19,13 @@ const DB_CHARSET = 'utf8mb4';
 const APP_NAME = 'やまふじ農園 お米 注文予測';
 const APP_TIMEZONE = 'Asia/Tokyo';
 
+// ---- プッシュ通知 (VAPID) ----
+// 初回のみ index.php?p=vapid_setup にアクセスして鍵を生成し、その値をここに貼り付けてください。
+// 以降は鍵を変えないでください（既存端末の購読情報が無効になります）。
+const VAPID_SUBJECT      = 'mailto:your-email@example.com'; // 連絡先メール or サイト URL
+const VAPID_PUBLIC_KEY   = '';                              // base64url 87 文字程度
+const VAPID_PRIVATE_KEY  = '';                              // base64url 43 文字程度
+
 // ---- タイムゾーン設定 ----
 date_default_timezone_set(APP_TIMEZONE);
 

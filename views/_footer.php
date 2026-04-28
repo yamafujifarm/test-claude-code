@@ -21,7 +21,7 @@
         <span class="app-nav__icon">≡</span>
         <span class="app-nav__label">履歴</span>
     </a>
-    <a class="app-nav__item <?= ($current === 'export' || $current === 'import') ? 'is-active' : '' ?>"
+    <a class="app-nav__item <?= in_array($current, ['export','import','staff','settings','vapid_setup'], true) ? 'is-active' : '' ?>"
        href="<?= h(url('', ['p' => 'export'])) ?>">
         <span class="app-nav__icon">↓</span>
         <span class="app-nav__label">データ</span>

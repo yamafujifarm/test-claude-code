@@ -6,6 +6,8 @@ require __DIR__ . '/lib/db.php';
 require __DIR__ . '/lib/helpers.php';
 require __DIR__ . '/lib/predictor.php';
 require __DIR__ . '/lib/csv.php';
+require __DIR__ . '/lib/push.php';
+require __DIR__ . '/lib/notify.php';
 
 try {
     $pdo = db();
@@ -32,6 +34,12 @@ $pages = [
     'export'          => 'export.php',
     'import'          => 'import.php',
     'history'         => 'history.php',
+    'staff'           => 'staff.php',
+    'settings'        => 'settings.php',
+    'vapid_setup'     => 'vapid_setup.php',
+    'api_subscribe'   => 'api_subscribe.php',
+    'api_unsubscribe' => 'api_unsubscribe.php',
+    'api_test_push'   => 'api_test_push.php',
 ];
 
 $page = (string)($_GET['p'] ?? 'dashboard');
