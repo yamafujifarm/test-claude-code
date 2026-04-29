@@ -21,6 +21,7 @@ $prediction = predict_next_order($customer['category'], $purchases);
 $daysUntil  = days_until($prediction['next_date']);
 
 $historyDesc = array_reverse($purchases);
+$totalKg = array_sum(array_map(fn($p) => (float)$p['quantity_kg'], $purchases));
 
 $pageTitle = $customer['name'];
 require __DIR__ . '/_header.php';
@@ -87,6 +88,14 @@ require __DIR__ . '/_header.php';
 <section class="page-section">
     <h3 class="section-title">購入履歴 (<?= count($purchases) ?>件)</h3>
 
+    <?php if (!empty($purchases)): ?>
+        <div class="customer-total">
+            <span class="customer-total__label">累計</span>
+            <span class="customer-total__kg"><?= h(number_format($totalKg, 1)) ?> kg</span>
+            <span class="customer-total__genmai">玄米 <?= h(number_format(genmai_count($totalKg), 1)) ?> 本</span>
+        </div>
+    <?php endif; ?>
+
     <?php if (empty($historyDesc)): ?>
         <p class="muted">購入履歴がありません。「+ 購入を記録」ボタンから追加してください。</p>
     <?php else: ?>
@@ -95,7 +104,10 @@ require __DIR__ . '/_header.php';
                 <li class="history-item">
                     <div class="history-item__main">
                         <div class="history-item__date"><?= h(format_datetime($row['purchased_at'])) ?></div>
-                        <div class="history-item__qty"><?= h(format_kg((float)$row['quantity_kg'])) ?></div>
+                        <div class="history-item__qty">
+                            <?= h(format_kg((float)$row['quantity_kg'])) ?>
+                            <span class="history-item__genmai">玄米 <?= h(number_format(genmai_count((float)$row['quantity_kg']), 1)) ?> 本</span>
+                        </div>
                     </div>
                     <?php if (!empty($row['note'])): ?>
                         <div class="history-item__note"><?= nl2br(h($row['note'])) ?></div>

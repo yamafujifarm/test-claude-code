@@ -73,6 +73,33 @@ function format_kg(?float $kg): string
     return rtrim(rtrim(number_format($kg, 2), '0'), '.') . ' kg';
 }
 
+/**
+ * 玄米本数の計算ベース。白米 1 本（袋）= 27 kg として計算する。
+ * 業務上の換算式: 玄米本数 = 白米kg / 27
+ */
+const GENMAI_KG_PER_UNIT = 27;
+
+function genmai_count(float $kg): float
+{
+    if (GENMAI_KG_PER_UNIT <= 0) return 0.0;
+    return $kg / GENMAI_KG_PER_UNIT;
+}
+
+function format_genmai(?float $kg): string
+{
+    if ($kg === null) return '-';
+    return rtrim(rtrim(number_format(genmai_count($kg), 2), '0'), '.') . ' 本';
+}
+
+/**
+ * 「30 kg / 玄米 1.1 本」のように白米 kg と玄米本数を併記する。
+ */
+function format_kg_with_genmai(?float $kg): string
+{
+    if ($kg === null) return '-';
+    return format_kg($kg) . ' / 玄米 ' . rtrim(rtrim(number_format(genmai_count($kg), 2), '0'), '.') . ' 本';
+}
+
 function days_until(?string $dateStr): ?int
 {
     if (!$dateStr) return null;

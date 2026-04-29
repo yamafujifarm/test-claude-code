@@ -34,12 +34,13 @@ function notify_purchase_recorded(PDO $pdo, int $purchaseId, ?int $excludeStaffI
     }
 
     $title = '🌾 注文記録: ' . $row['customer_name'];
+    $kg = (float)$row['quantity_kg'];
     $bodyParts = [];
     if (!empty($row['staff_name'])) {
         $bodyParts[] = $row['staff_name'] . 'さんが記録';
     }
     $bodyParts[] = category_label($row['category']);
-    $bodyParts[] = format_kg((float)$row['quantity_kg']);
+    $bodyParts[] = format_kg($kg) . '（玄米 ' . rtrim(rtrim(number_format(genmai_count($kg), 1), '0'), '.') . ' 本）';
     $bodyParts[] = format_datetime($row['purchased_at']);
     $body = implode(' / ', $bodyParts);
 

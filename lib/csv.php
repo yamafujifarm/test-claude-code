@@ -39,7 +39,7 @@ function export_purchases_csv(PDO $pdo): void
 
     $header = [
         '購入ID', '顧客ID', '顧客名', 'カテゴリー',
-        '購入日時', '数量(kg)', 'メモ',
+        '購入日時', '数量(kg)', '玄米本数', 'メモ',
     ];
 
     $rows = (function () use ($stmt) {
@@ -51,6 +51,7 @@ function export_purchases_csv(PDO $pdo): void
                 category_label($row['category']),
                 $row['purchased_at'],
                 $row['quantity_kg'],
+                round(genmai_count((float)$row['quantity_kg']), 2),
                 $row['note'] ?? '',
             ];
         }

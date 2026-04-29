@@ -158,6 +158,12 @@ a:hover { text-decoration: underline; }
     color: var(--color-text-muted);
     margin-top: 4px;
 }
+.summary-card__sub {
+    font-size: 12px;
+    color: var(--color-accent);
+    font-weight: 700;
+    margin-top: 2px;
+}
 
 /* ----- Customer list ----- */
 .customer-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
@@ -433,7 +439,46 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     gap: 12px;
 }
 .history-item__date { font-size: 14px; color: var(--color-text); }
-.history-item__qty { font-weight: 700; font-size: 16px; color: var(--color-accent-dark); }
+.history-item__qty {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--color-accent-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+}
+.history-item__genmai {
+    font-size: 11px;
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.customer-total {
+    background: var(--color-soft);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.customer-total__label {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+}
+.customer-total__kg {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--color-accent-dark);
+}
+.customer-total__genmai {
+    font-size: 13px;
+    color: var(--color-accent);
+    font-weight: 700;
+}
 .history-item__note {
     grid-column: 1;
     font-size: 12px;
@@ -592,7 +637,12 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     font-weight: 700;
     color: var(--color-accent-dark);
     line-height: 1.1;
-    margin: 2px 0 6px;
+    margin: 2px 0 2px;
+}
+.category-stat__sub {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-bottom: 6px;
 }
 .category-stat__num .unit {
     font-size: 13px;
@@ -640,10 +690,21 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     border-radius: 3px;
 }
 .month-row__num {
+    text-align: right;
+    min-width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.2;
+}
+.month-row__kg {
     font-weight: 700;
     color: var(--color-text);
-    text-align: right;
-    min-width: 70px;
+}
+.month-row__genmai {
+    font-size: 11px;
+    color: var(--color-accent);
+    font-weight: 600;
 }
 .month-row__cnt {
     font-size: 11px;
@@ -712,16 +773,24 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 .history-global-item__side {
     text-align: right;
     white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    line-height: 1.25;
 }
 .history-global-item__qty {
     font-weight: 700;
     font-size: 15px;
     color: var(--color-accent-dark);
 }
+.history-global-item__genmai {
+    font-size: 11px;
+    color: var(--color-accent);
+    font-weight: 600;
+}
 .history-global-item__time {
     font-size: 11px;
     color: var(--color-text-muted);
-    margin-left: 6px;
 }
 .history-global-item__note {
     grid-column: 1 / -1;

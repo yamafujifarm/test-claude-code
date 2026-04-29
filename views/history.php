@@ -84,10 +84,12 @@ require __DIR__ . '/_header.php';
     <div class="summary-grid summary-grid--2">
         <div class="summary-card">
             <div class="summary-card__num"><?= h(number_format($totalKg, 1)) ?><span class="unit"> kg</span></div>
+            <div class="summary-card__sub">玄米 <?= h(number_format(genmai_count($totalKg), 1)) ?> 本</div>
             <div class="summary-card__label">累計の精米数量</div>
         </div>
         <div class="summary-card">
             <div class="summary-card__num"><?= h(number_format($thisMonthKg, 1)) ?><span class="unit"> kg</span></div>
+            <div class="summary-card__sub">玄米 <?= h(number_format(genmai_count($thisMonthKg), 1)) ?> 本</div>
             <div class="summary-card__label">今月（<?= h($thisMonth) ?>）</div>
         </div>
     </div>
@@ -106,6 +108,7 @@ require __DIR__ . '/_header.php';
                     <span class="category-stat__pct"><?= $pct ?>%</span>
                 </div>
                 <div class="category-stat__num"><?= h(number_format($kg, 1)) ?><span class="unit"> kg</span></div>
+                <div class="category-stat__sub">玄米 <?= h(number_format(genmai_count($kg), 1)) ?> 本</div>
                 <div class="category-stat__bar">
                     <div class="category-stat__bar-fill" style="width: <?= $pct ?>%; background: <?php
                         echo $key === 'business' ? 'var(--color-business)' :
@@ -139,7 +142,10 @@ require __DIR__ . '/_header.php';
                     <div class="month-row__bar">
                         <div class="month-row__bar-fill" style="width: <?= $pct ?>%;"></div>
                     </div>
-                    <div class="month-row__num"><?= h(number_format((float)$m['kg'], 1)) ?> kg</div>
+                    <div class="month-row__num">
+                        <span class="month-row__kg"><?= h(number_format((float)$m['kg'], 1)) ?> kg</span>
+                        <span class="month-row__genmai">玄米 <?= h(number_format(genmai_count((float)$m['kg']), 1)) ?> 本</span>
+                    </div>
                     <div class="month-row__cnt"><?= (int)$m['cnt'] ?>件</div>
                 </a>
             <?php endforeach; ?>
@@ -157,7 +163,7 @@ require __DIR__ . '/_header.php';
                 <option value="">すべての月</option>
                 <?php foreach ($monthly as $m): ?>
                     <option value="<?= h($m['ym']) ?>" <?= $ymFilter === $m['ym'] ? 'selected' : '' ?>>
-                        <?= h($m['ym']) ?>（<?= h(number_format((float)$m['kg'], 1)) ?> kg）
+                        <?= h($m['ym']) ?>（<?= h(number_format((float)$m['kg'], 1)) ?> kg / 玄米 <?= h(number_format(genmai_count((float)$m['kg']), 1)) ?> 本）
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -174,7 +180,7 @@ require __DIR__ . '/_header.php';
 
     <?php if ($ymFilter !== '' || $catFilter !== ''): ?>
         <div class="filter-summary">
-            該当 <strong><?= count($history) ?></strong> 件 / 合計 <strong><?= h(number_format($filteredKg, 1)) ?> kg</strong>
+            該当 <strong><?= count($history) ?></strong> 件 / 合計 <strong><?= h(number_format($filteredKg, 1)) ?> kg</strong> / 玄米 <strong><?= h(number_format(genmai_count($filteredKg), 1)) ?> 本</strong>
             <a class="filter-summary__clear" href="<?= h(url('', ['p' => 'history'])) ?>">フィルタ解除</a>
         </div>
     <?php endif; ?>
@@ -206,6 +212,7 @@ require __DIR__ . '/_header.php';
                         </div>
                         <div class="history-global-item__side">
                             <span class="history-global-item__qty"><?= h(format_kg((float)$row['quantity_kg'])) ?></span>
+                            <span class="history-global-item__genmai">玄米 <?= h(number_format(genmai_count((float)$row['quantity_kg']), 1)) ?> 本</span>
                             <span class="history-global-item__time"><?= h(date('H:i', strtotime($row['purchased_at']))) ?></span>
                         </div>
                         <?php if (!empty($row['note'])): ?>
