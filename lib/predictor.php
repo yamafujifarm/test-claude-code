@@ -18,8 +18,14 @@ declare(strict_types=1);
  */
 function predict_next_order(string $category, array $purchases): array
 {
-    $count = count($purchases);
-    $last  = $count > 0 ? $purchases[$count - 1]['purchased_at'] : null;
+    // マイナス（在庫からの引き当てなど）は「注文」ではないので予測の対象から除外
+    $positive = array_values(array_filter(
+        $purchases,
+        fn($p) => (float)($p['quantity_kg'] ?? 0) > 0
+    ));
+
+    $count = count($positive);
+    $last  = $count > 0 ? $positive[$count - 1]['purchased_at'] : null;
 
     if ($count < 2) {
         return [
@@ -32,7 +38,7 @@ function predict_next_order(string $category, array $purchases): array
         ];
     }
 
-    $intervals = calculate_intervals($purchases);
+    $intervals = calculate_intervals($positive);
     $intervalDays = pick_interval($category, $intervals);
 
     $lastTs   = strtotime($last);

@@ -7,11 +7,12 @@ $id     = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $errors = [];
 
 $customer = [
-    'id'       => 0,
-    'name'     => '',
-    'category' => 'business',
-    'phone'    => '',
-    'note'     => '',
+    'id'               => 0,
+    'name'             => '',
+    'category'         => 'business',
+    'primary_staff_id' => null,
+    'phone'            => '',
+    'note'             => '',
 ];
 
 if ($isEdit) {
@@ -26,11 +27,15 @@ if ($isEdit) {
     $customer = $row;
 }
 
+$staffList = $pdo->query('SELECT id, name FROM staff ORDER BY name ASC')->fetchAll();
+
 if (is_post()) {
-    $customer['name']     = trim((string)post('name', ''));
-    $customer['category'] = (string)post('category', 'business');
-    $customer['phone']    = trim((string)post('phone', ''));
-    $customer['note']     = (string)post('note', '');
+    $customer['name']             = trim((string)post('name', ''));
+    $customer['category']         = (string)post('category', 'business');
+    $primaryStaffRaw              = post('primary_staff_id', '');
+    $customer['primary_staff_id'] = ($primaryStaffRaw !== '' ? (int)$primaryStaffRaw : null);
+    $customer['phone']            = trim((string)post('phone', ''));
+    $customer['note']             = (string)post('note', '');
 
     if ($customer['name'] === '') {
         $errors[] = '顧客名を入力してください。';
@@ -42,11 +47,14 @@ if (is_post()) {
     if (empty($errors)) {
         if ($isEdit) {
             $stmt = $pdo->prepare(
-                'UPDATE customers SET name = :name, category = :category, phone = :phone, note = :note WHERE id = :id'
+                'UPDATE customers SET name = :name, category = :category,
+                    primary_staff_id = :psid, phone = :phone, note = :note
+                 WHERE id = :id'
             );
             $stmt->execute([
                 ':name'     => $customer['name'],
                 ':category' => $customer['category'],
+                ':psid'     => $customer['primary_staff_id'],
                 ':phone'    => $customer['phone'] ?: null,
                 ':note'     => $customer['note'] ?: null,
                 ':id'       => $id,
@@ -54,11 +62,13 @@ if (is_post()) {
             redirect('customer_detail', ['id' => $id, 'msg' => 'updated']);
         } else {
             $stmt = $pdo->prepare(
-                'INSERT INTO customers (name, category, phone, note) VALUES (:name, :category, :phone, :note)'
+                'INSERT INTO customers (name, category, primary_staff_id, phone, note)
+                 VALUES (:name, :category, :psid, :phone, :note)'
             );
             $stmt->execute([
                 ':name'     => $customer['name'],
                 ':category' => $customer['category'],
+                ':psid'     => $customer['primary_staff_id'],
                 ':phone'    => $customer['phone'] ?: null,
                 ':note'     => $customer['note'] ?: null,
             ]);
@@ -100,6 +110,20 @@ require __DIR__ . '/_header.php';
                     </label>
                 <?php endforeach; ?>
             </div>
+        </div>
+
+        <div class="form-row">
+            <label class="form-label" for="primary_staff_id">主担当者</label>
+            <select id="primary_staff_id" name="primary_staff_id" class="form-input">
+                <option value="">未設定（誰でも対応）</option>
+                <?php foreach ($staffList as $s): ?>
+                    <option value="<?= h((string)$s['id']) ?>"
+                        <?= (int)($customer['primary_staff_id'] ?? 0) === (int)$s['id'] ? 'selected' : '' ?>>
+                        <?= h($s['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p class="muted" style="font-size:12px;">記録画面でこの顧客を上位に表示する人を選びます。</p>
         </div>
 
         <div class="form-row">

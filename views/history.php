@@ -11,7 +11,13 @@
  * @var PDO $pdo
  */
 
-$ymFilter  = trim((string)($_GET['ym']  ?? ''));   // 例: 2026-04
+// `ym` パラメータが URL に無ければ「今月」をデフォルトに。
+// `ym=` (空文字列) を明示的に指定すると「すべての月」を意味する。
+if (array_key_exists('ym', $_GET)) {
+    $ymFilter = trim((string)$_GET['ym']);
+} else {
+    $ymFilter = date('Y-m');
+}
 $catFilter = trim((string)($_GET['cat'] ?? ''));   // business / regular / retail
 
 // ---- 集計 ----------
@@ -126,12 +132,15 @@ require __DIR__ . '/_header.php';
         <p class="muted">データがありません。</p>
     <?php else: ?>
         <?php
-        $maxKg = max(array_map(fn($m) => (float)$m['kg'], $monthly));
+        // バーの最大値はプラスの月のみで決定（マイナス月があってもバーが伸びすぎないように）
+        $positiveMaxKg = max(0.0, ...array_map(fn($m) => max(0.0, (float)$m['kg']), $monthly));
         ?>
         <div class="month-list">
             <?php foreach ($monthly as $m):
-                $pct = $maxKg > 0 ? (float)$m['kg'] / $maxKg * 100 : 0;
+                $kg = (float)$m['kg'];
+                $pct = ($positiveMaxKg > 0 && $kg > 0) ? $kg / $positiveMaxKg * 100 : 0;
                 $isCurrent = $m['ym'] === $thisMonth;
+                $isNeg = $kg < 0;
             ?>
                 <a class="month-row <?= $isCurrent ? 'is-current' : '' ?>"
                    href="<?= h(url('', ['p' => 'history', 'ym' => $m['ym']])) ?>">
@@ -143,8 +152,8 @@ require __DIR__ . '/_header.php';
                         <div class="month-row__bar-fill" style="width: <?= $pct ?>%;"></div>
                     </div>
                     <div class="month-row__num">
-                        <span class="month-row__kg"><?= h(number_format((float)$m['kg'], 1)) ?> kg</span>
-                        <span class="month-row__genmai">玄米 <?= h(number_format(genmai_count((float)$m['kg']), 1)) ?> 本</span>
+                        <span class="month-row__kg <?= $isNeg ? 'qty-negative' : '' ?>"><?= h(number_format($kg, 1)) ?> kg</span>
+                        <span class="month-row__genmai">玄米 <?= h(number_format(genmai_count($kg), 1)) ?> 本</span>
                     </div>
                     <div class="month-row__cnt"><?= (int)$m['cnt'] ?>件</div>
                 </a>
@@ -160,8 +169,18 @@ require __DIR__ . '/_header.php';
         <input type="hidden" name="p" value="history">
         <div class="filter-form__row">
             <select name="ym" class="form-input" onchange="this.form.submit()">
-                <option value="">すべての月</option>
-                <?php foreach ($monthly as $m): ?>
+                <option value="" <?= $ymFilter === '' ? 'selected' : '' ?>>すべての月</option>
+                <?php
+                // 今月が monthly に存在しない（=今月の購入がまだない）場合でも選択肢として表示
+                $monthsForSelect = $monthly;
+                $hasThisMonth = false;
+                foreach ($monthly as $m) {
+                    if ($m['ym'] === $thisMonth) { $hasThisMonth = true; break; }
+                }
+                if (!$hasThisMonth) {
+                    array_unshift($monthsForSelect, ['ym' => $thisMonth, 'kg' => 0.0, 'cnt' => 0]);
+                }
+                foreach ($monthsForSelect as $m): ?>
                     <option value="<?= h($m['ym']) ?>" <?= $ymFilter === $m['ym'] ? 'selected' : '' ?>>
                         <?= h($m['ym']) ?>（<?= h(number_format((float)$m['kg'], 1)) ?> kg / 玄米 <?= h(number_format(genmai_count((float)$m['kg']), 1)) ?> 本）
                     </option>

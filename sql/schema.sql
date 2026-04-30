@@ -11,16 +11,18 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- 顧客マスタ
 -- ---------------------------------------------
 CREATE TABLE IF NOT EXISTS customers (
-    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name          VARCHAR(100) NOT NULL,
-    category      ENUM('business','regular','retail') NOT NULL,
-    phone         VARCHAR(50) DEFAULT NULL,
-    note          TEXT DEFAULT NULL,
-    created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name             VARCHAR(100) NOT NULL,
+    category         ENUM('business','regular','retail') NOT NULL,
+    primary_staff_id INT UNSIGNED NULL,
+    phone            VARCHAR(50) DEFAULT NULL,
+    note             TEXT DEFAULT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_category (category),
-    KEY idx_name (name)
+    KEY idx_name (name),
+    KEY idx_primary_staff (primary_staff_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------
@@ -55,6 +57,11 @@ CREATE TABLE IF NOT EXISTS purchases (
         FOREIGN KEY (staff_id) REFERENCES staff(id)
         ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 顧客の主担当者 FK は staff テーブル作成後に追加
+ALTER TABLE customers
+    ADD CONSTRAINT fk_customer_primary_staff
+    FOREIGN KEY (primary_staff_id) REFERENCES staff(id) ON DELETE SET NULL;
 
 -- ---------------------------------------------
 -- プッシュ通知の購読情報（端末ごとに 1 レコード）

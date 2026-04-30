@@ -479,6 +479,21 @@ textarea.form-input { resize: vertical; min-height: 80px; }
     color: var(--color-accent);
     font-weight: 700;
 }
+
+/* マイナス数量（在庫からの引き当て等）の強調 */
+.qty-negative {
+    color: var(--color-error) !important;
+}
+.history-item--negative {
+    background: #fff7f5;
+}
+.history-item--negative .history-item__date::before {
+    content: '在庫から ';
+    font-size: 11px;
+    color: var(--color-error);
+    font-weight: 700;
+    margin-right: 4px;
+}
 .history-item__note {
     grid-column: 1;
     font-size: 12px;

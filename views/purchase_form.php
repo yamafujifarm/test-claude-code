@@ -4,8 +4,11 @@
 $customerId = isset($_GET['customer_id']) ? (int)$_GET['customer_id'] : 0;
 $errors = [];
 
-$customers = $pdo->query('SELECT id, name, category FROM customers ORDER BY name ASC')->fetchAll();
-$staff     = $pdo->query('SELECT id, name FROM staff ORDER BY name ASC')->fetchAll();
+$customers = $pdo->query(
+    'SELECT id, name, category, primary_staff_id
+     FROM customers ORDER BY name ASC'
+)->fetchAll();
+$staff = $pdo->query('SELECT id, name FROM staff ORDER BY id ASC')->fetchAll();
 
 $form = [
     'customer_id'    => $customerId,
@@ -33,8 +36,8 @@ if (is_post()) {
     if ($form['purchased_date'] === '' || !strtotime($form['purchased_date'])) {
         $errors[] = '購入日を入力してください。';
     }
-    if ($form['quantity_kg'] === '' || !is_numeric($form['quantity_kg']) || (float)$form['quantity_kg'] <= 0) {
-        $errors[] = '数量(kg)は0より大きい数値を入力してください。';
+    if ($form['quantity_kg'] === '' || !is_numeric($form['quantity_kg']) || (float)$form['quantity_kg'] == 0.0) {
+        $errors[] = '数量(kg) は 0 以外の数値を入力してください（在庫から差し引く場合はマイナス）。';
     }
 
     if (empty($errors)) {
@@ -63,6 +66,23 @@ if (is_post()) {
     }
 }
 
+// ---- 顧客を担当者 × カテゴリーでグルーピング ----------
+$categoryOrder = ['business', 'regular', 'retail'];
+$staffNames    = [0 => '担当未設定'];
+foreach ($staff as $s) {
+    $staffNames[(int)$s['id']] = $s['name'];
+}
+
+$grouped = []; // [staffId][category] => [customer, ...]
+foreach ($customers as $c) {
+    $sid = (int)($c['primary_staff_id'] ?? 0);
+    $cat = $c['category'];
+    $grouped[$sid][$cat][] = $c;
+}
+// 担当者順: 登録順（id 昇順）+ 末尾に未設定
+$staffIdsInOrder = array_map(fn($s) => (int)$s['id'], $staff);
+$staffIdsInOrder[] = 0;
+
 $pageTitle = '購入を記録';
 require __DIR__ . '/_header.php';
 ?>
@@ -85,19 +105,6 @@ require __DIR__ . '/_header.php';
         <?php endif; ?>
 
         <form method="post" action="<?= h(url('', ['p' => 'purchase_new'])) ?>" class="form" id="purchase-form">
-            <div class="form-row">
-                <label class="form-label" for="customer_id">顧客 <span class="required">*</span></label>
-                <select id="customer_id" name="customer_id" required class="form-input">
-                    <option value="">-- 選択してください --</option>
-                    <?php foreach ($customers as $c): ?>
-                        <option value="<?= h((string)$c['id']) ?>"
-                            <?= (int)$form['customer_id'] === (int)$c['id'] ? 'selected' : '' ?>>
-                            [<?= h(category_label($c['category'])) ?>] <?= h($c['name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
             <?php if (!empty($staff)): ?>
                 <div class="form-row">
                     <label class="form-label" for="staff_id">担当者 <span class="required">*</span></label>
@@ -110,6 +117,7 @@ require __DIR__ . '/_header.php';
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <p class="muted" style="font-size:12px;">あなたの担当の顧客が顧客リストの上位に並びます。</p>
                 </div>
             <?php else: ?>
                 <div class="alert alert-info">
@@ -117,6 +125,34 @@ require __DIR__ . '/_header.php';
                     通知機能を使う場合は <a href="<?= h(url('', ['p' => 'staff'])) ?>">担当者管理</a> から登録してください。
                 </div>
             <?php endif; ?>
+
+            <div class="form-row">
+                <label class="form-label" for="customer_id">顧客 <span class="required">*</span></label>
+                <select id="customer_id" name="customer_id" required class="form-input">
+                    <option value="">-- 選択してください --</option>
+                    <?php foreach ($staffIdsInOrder as $sid):
+                        $catGroups = $grouped[$sid] ?? [];
+                        if (empty($catGroups)) continue;
+                        foreach ($categoryOrder as $catIdx => $cat):
+                            if (empty($catGroups[$cat])) continue;
+                            $sname = $staffNames[$sid] ?? '担当未設定';
+                            $catLabel = category_label($cat);
+                    ?>
+                        <optgroup label="<?= h($sname . ' / ' . $catLabel) ?>"
+                                  data-staff="<?= h((string)$sid) ?>"
+                                  data-cat-order="<?= $catIdx + 1 ?>">
+                            <?php foreach ($catGroups[$cat] as $c): ?>
+                                <option value="<?= h((string)$c['id']) ?>"
+                                    <?= (int)$form['customer_id'] === (int)$c['id'] ? 'selected' : '' ?>>
+                                    <?= h($c['name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php
+                        endforeach;
+                    endforeach; ?>
+                </select>
+            </div>
 
             <div class="form-row form-row--split">
                 <div class="form-row__col">
@@ -135,7 +171,8 @@ require __DIR__ . '/_header.php';
                 <label class="form-label" for="quantity_kg">数量 (kg) <span class="required">*</span></label>
                 <input type="number" id="quantity_kg" name="quantity_kg"
                        value="<?= h((string)$form['quantity_kg']) ?>"
-                       step="0.1" min="0.1" inputmode="decimal" required class="form-input">
+                       step="0.1" inputmode="decimal" required class="form-input">
+                <p class="muted" style="font-size:12px;">マイナスの値も入力可（例: 自由米の在庫を業務用に回したときは <code>-30</code>）。</p>
             </div>
 
             <div class="form-row">
@@ -153,18 +190,42 @@ require __DIR__ . '/_header.php';
 </section>
 
 <script>
-// 担当者選択を localStorage に保存し、次回デフォルトに反映
 (function() {
-    const sel = document.getElementById('staff_id');
-    if (!sel) return;
-    const stored = localStorage.getItem('rice-app-last-staff-id');
-    if (stored && !sel.value) {
-        const opt = sel.querySelector('option[value="' + stored + '"]');
-        if (opt) sel.value = stored;
+    const customerSel = document.getElementById('customer_id');
+    const staffSel    = document.getElementById('staff_id');
+    if (!customerSel) return;
+
+    function reorderGroups(staffId) {
+        const groups = Array.from(customerSel.querySelectorAll('optgroup'));
+        groups.sort((a, b) => {
+            const aSid = parseInt(a.dataset.staff || '0', 10);
+            const bSid = parseInt(b.dataset.staff || '0', 10);
+            // 自分の担当 (0) → 他の担当 (1) → 担当未設定 (2)
+            const rank = (sid) => sid === staffId ? 0 : (sid === 0 ? 2 : 1);
+            const r = rank(aSid) - rank(bSid);
+            if (r !== 0) return r;
+            const aOrd = parseInt(a.dataset.catOrder || '99', 10);
+            const bOrd = parseInt(b.dataset.catOrder || '99', 10);
+            return aOrd - bOrd;
+        });
+        groups.forEach(g => customerSel.appendChild(g));
     }
-    sel.addEventListener('change', () => {
-        if (sel.value) localStorage.setItem('rice-app-last-staff-id', sel.value);
-    });
+
+    if (staffSel) {
+        // localStorage から前回の担当を復元
+        const stored = localStorage.getItem('rice-app-last-staff-id');
+        if (stored && !staffSel.value) {
+            const opt = staffSel.querySelector('option[value="' + stored + '"]');
+            if (opt) staffSel.value = stored;
+        }
+        // 初期並び替え
+        reorderGroups(parseInt(staffSel.value || '0', 10));
+        // 担当者を変えるたびに並び替え
+        staffSel.addEventListener('change', () => {
+            reorderGroups(parseInt(staffSel.value || '0', 10));
+            if (staffSel.value) localStorage.setItem('rice-app-last-staff-id', staffSel.value);
+        });
+    }
 })();
 </script>
 

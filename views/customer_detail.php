@@ -91,7 +91,7 @@ require __DIR__ . '/_header.php';
     <?php if (!empty($purchases)): ?>
         <div class="customer-total">
             <span class="customer-total__label">累計</span>
-            <span class="customer-total__kg"><?= h(number_format($totalKg, 1)) ?> kg</span>
+            <span class="customer-total__kg <?= $totalKg < 0 ? 'qty-negative' : '' ?>"><?= h(number_format($totalKg, 1)) ?> kg</span>
             <span class="customer-total__genmai">玄米 <?= h(number_format(genmai_count($totalKg), 1)) ?> 本</span>
         </div>
     <?php endif; ?>
@@ -100,13 +100,17 @@ require __DIR__ . '/_header.php';
         <p class="muted">購入履歴がありません。「+ 購入を記録」ボタンから追加してください。</p>
     <?php else: ?>
         <ul class="history-list">
-            <?php foreach ($historyDesc as $row): ?>
-                <li class="history-item">
+            <?php foreach ($historyDesc as $row):
+                $qty = (float)$row['quantity_kg'];
+                $isNeg = $qty < 0; ?>
+                <li class="history-item <?= $isNeg ? 'history-item--negative' : '' ?>">
                     <div class="history-item__main">
                         <div class="history-item__date"><?= h(format_datetime($row['purchased_at'])) ?></div>
                         <div class="history-item__qty">
-                            <?= h(format_kg((float)$row['quantity_kg'])) ?>
-                            <span class="history-item__genmai">玄米 <?= h(number_format(genmai_count((float)$row['quantity_kg']), 1)) ?> 本</span>
+                            <span class="<?= $isNeg ? 'qty-negative' : '' ?>">
+                                <?= $isNeg ? '▼ ' : '' ?><?= h(format_kg($qty)) ?>
+                            </span>
+                            <span class="history-item__genmai">玄米 <?= h(number_format(genmai_count($qty), 1)) ?> 本</span>
                         </div>
                     </div>
                     <?php if (!empty($row['note'])): ?>
