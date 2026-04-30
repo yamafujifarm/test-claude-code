@@ -16,6 +16,7 @@ $form = [
     'purchased_date' => date('Y-m-d'),
     'purchased_time' => date('H:i'),
     'quantity_kg'    => '',
+    'is_negative'    => false,
     'note'           => '',
 ];
 
@@ -25,6 +26,7 @@ if (is_post()) {
     $form['purchased_date'] = (string)post('purchased_date', '');
     $form['purchased_time'] = (string)post('purchased_time', '00:00');
     $form['quantity_kg']    = (string)post('quantity_kg', '');
+    $form['is_negative']    = (bool)post('is_negative', false);
     $form['note']           = (string)post('note', '');
 
     if ($form['customer_id'] <= 0) {
@@ -37,10 +39,15 @@ if (is_post()) {
         $errors[] = '購入日を入力してください。';
     }
     if ($form['quantity_kg'] === '' || !is_numeric($form['quantity_kg']) || (float)$form['quantity_kg'] == 0.0) {
-        $errors[] = '数量(kg) は 0 以外の数値を入力してください（在庫から差し引く場合はマイナス）。';
+        $errors[] = '数量(kg) は 0 以外の数値を入力してください。';
     }
 
     if (empty($errors)) {
+        // 在庫から差し引くチェックがオンなら符号を強制的にマイナスに
+        $qty = (float)$form['quantity_kg'];
+        if ($form['is_negative']) {
+            $qty = -abs($qty);
+        }
         $datetime = $form['purchased_date'] . ' ' . ($form['purchased_time'] ?: '00:00') . ':00';
         $stmt = $pdo->prepare(
             'INSERT INTO purchases (customer_id, staff_id, purchased_at, quantity_kg, note)
@@ -50,7 +57,7 @@ if (is_post()) {
             ':cid'  => $form['customer_id'],
             ':sid'  => $form['staff_id'] > 0 ? $form['staff_id'] : null,
             ':pa'   => $datetime,
-            ':qty'  => (float)$form['quantity_kg'],
+            ':qty'  => $qty,
             ':note' => $form['note'] !== '' ? $form['note'] : null,
         ]);
         $newId = (int)$pdo->lastInsertId();
@@ -171,8 +178,12 @@ require __DIR__ . '/_header.php';
                 <label class="form-label" for="quantity_kg">数量 (kg) <span class="required">*</span></label>
                 <input type="number" id="quantity_kg" name="quantity_kg"
                        value="<?= h((string)$form['quantity_kg']) ?>"
-                       step="0.1" inputmode="decimal" required class="form-input">
-                <p class="muted" style="font-size:12px;">マイナスの値も入力可（例: 自由米の在庫を業務用に回したときは <code>-30</code>）。</p>
+                       step="0.1" min="0" inputmode="decimal" required class="form-input">
+                <label class="qty-negative-toggle">
+                    <input type="checkbox" id="is_negative" name="is_negative" value="1"
+                        <?= !empty($form['is_negative']) ? 'checked' : '' ?>>
+                    <span>在庫から差し引く（マイナスとして記録）</span>
+                </label>
             </div>
 
             <div class="form-row">
@@ -225,6 +236,17 @@ require __DIR__ . '/_header.php';
             reorderGroups(parseInt(staffSel.value || '0', 10));
             if (staffSel.value) localStorage.setItem('rice-app-last-staff-id', staffSel.value);
         });
+    }
+
+    // マイナス記録のトグル：チェック時は数量入力欄を赤く強調
+    const negCheck = document.getElementById('is_negative');
+    const qtyInput = document.getElementById('quantity_kg');
+    if (negCheck && qtyInput) {
+        const sync = () => {
+            qtyInput.classList.toggle('form-input--negative', negCheck.checked);
+        };
+        negCheck.addEventListener('change', sync);
+        sync();
     }
 })();
 </script>
