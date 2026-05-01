@@ -245,8 +245,8 @@ function parse_import_csv(string $filepath): array
         if ($ts === false) {
             $rowErrors[] = '購入日時が不正です: ' . $dateStr;
         }
-        if ($qtyStr === '' || !is_numeric($qtyStr) || (float)$qtyStr <= 0) {
-            $rowErrors[] = '数量(kg) が不正です: ' . $qtyStr;
+        if ($qtyStr === '' || !is_numeric($qtyStr) || (float)$qtyStr == 0.0) {
+            $rowErrors[] = '数量(kg) が不正です（0 以外の数値、マイナスも可）: ' . $qtyStr;
         }
 
         if (!empty($rowErrors)) {

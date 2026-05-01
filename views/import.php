@@ -70,6 +70,7 @@ require __DIR__ . '/_header.php';
             <ul class="format-guide__list">
                 <li>カテゴリーは <code>業務用</code> / <code>常連</code> / <code>自由米</code> のいずれか</li>
                 <li>購入日時は <code>2026/01/15</code> や <code>2026/01/15 10:00</code> など</li>
+                <li>数量(kg) は <strong>マイナスも可</strong>（例: 自由米の在庫を業務用に回したときは <code>-30</code>）。<code>0</code> は不可。</li>
                 <li>同名の顧客が無い場合は自動で新規作成します</li>
                 <li>同じ顧客・同じ日時・同じ数量の行は二重登録を避けてスキップします</li>
                 <li>文字コードは UTF-8 / Shift_JIS どちらでも OK</li>
