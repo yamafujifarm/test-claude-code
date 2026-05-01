@@ -11,6 +11,10 @@ if ($type === 'predictions') {
     export_predictions_csv($pdo);
     return;
 }
+if ($type === 'customers') {
+    export_customers_csv($pdo);
+    return;
+}
 
 $pageTitle = 'データ管理';
 require __DIR__ . '/_header.php';
@@ -27,6 +31,13 @@ require __DIR__ . '/_header.php';
             <div class="export-card__desc">
                 Excel 等で管理している過去の購入履歴を取り込みます。<br>
                 顧客名・カテゴリー・購入日時・数量(kg)・メモ の 5 列。
+            </div>
+        </a>
+        <a class="export-card" href="<?= h(url('', ['p' => 'export', 'type' => 'customers'])) ?>">
+            <div class="export-card__title">顧客名一覧 CSV（取り込み前の表記合わせ用）</div>
+            <div class="export-card__desc">
+                登録済みの顧客名を一覧で書き出します。<br>
+                インポートする CSV と並べて見比べ、表記揺れを防げます。
             </div>
         </a>
     </div>

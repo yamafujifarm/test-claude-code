@@ -27,6 +27,61 @@ function output_csv(string $filename, array $header, iterable $rows): void
 }
 
 /**
+ * 顧客名一覧 CSV
+ *
+ * インポート前の表記合わせ用に、現在登録されている顧客の名前と関連情報を出力する。
+ * Excel で開いて、取り込み予定の CSV と並べて見比べる用途を想定。
+ */
+function export_customers_csv(PDO $pdo): void
+{
+    $sql = 'SELECT
+                c.id,
+                c.name,
+                c.category,
+                c.phone,
+                s.name AS staff_name,
+                COALESCE(stats.purchase_count, 0) AS purchase_count,
+                stats.last_purchased_at,
+                COALESCE(stats.total_kg, 0) AS total_kg,
+                c.note
+            FROM customers c
+            LEFT JOIN staff s ON s.id = c.primary_staff_id
+            LEFT JOIN (
+                SELECT customer_id,
+                       COUNT(*) AS purchase_count,
+                       MAX(purchased_at) AS last_purchased_at,
+                       SUM(quantity_kg) AS total_kg
+                FROM purchases
+                GROUP BY customer_id
+            ) stats ON stats.customer_id = c.id
+            ORDER BY c.name ASC';
+    $stmt = $pdo->query($sql);
+
+    $header = [
+        '顧客ID', '顧客名', 'カテゴリー', '主担当者',
+        '電話番号', '購入回数', '最終購入日', '累計(kg)', 'メモ',
+    ];
+
+    $rows = (function () use ($stmt) {
+        while ($row = $stmt->fetch()) {
+            yield [
+                $row['id'],
+                $row['name'],
+                category_label($row['category']),
+                $row['staff_name'] ?? '',
+                $row['phone'] ?? '',
+                (int)$row['purchase_count'],
+                $row['last_purchased_at'] ? format_date($row['last_purchased_at']) : '',
+                (float)$row['total_kg'],
+                $row['note'] ?? '',
+            ];
+        }
+    })();
+
+    output_csv('customers_' . date('Ymd_His') . '.csv', $header, $rows);
+}
+
+/**
  * 購入履歴 CSV（生データ）
  */
 function export_purchases_csv(PDO $pdo): void
